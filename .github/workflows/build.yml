@@ -1,0 +1,76 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  desktop:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pakete
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ninja-build mingw-w64 \
+            libx11-dev libxext-dev libxft-dev libxinerama-dev libxcursor-dev \
+            libxrender-dev libxfixes-dev libfontconfig-dev
+
+      - name: Linux bauen
+        working-directory: desktop
+        run: |
+          cmake -S . -B build-linux -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build build-linux
+
+      - name: Windows bauen (MinGW-w64)
+        working-directory: desktop
+        run: |
+          cmake -S . -B build-win -G Ninja -DCMAKE_BUILD_TYPE=Release \
+                -DCMAKE_TOOLCHAIN_FILE=cmake/mingw-w64-x86_64.cmake
+          cmake --build build-win
+
+      - name: Kern pruefen (irb2csv gegen Referenzwerte)
+        working-directory: desktop
+        run: |
+          cp ../samples/20923002.IRB /tmp/
+          ./build-linux/irb2csv --en /tmp/20923002.IRB | tee /tmp/out.txt
+          grep -q "min -16.62  max 26.27  mittel 13.81" /tmp/out.txt
+
+      - name: Pakete schnueren
+        run: |
+          mkdir -p dist/win dist/linux
+          cp desktop/build-win/thermoviewer98.exe desktop/build-win/irb2csv.exe desktop/LIESMICH.txt dist/win/
+          cp desktop/build-linux/thermoviewer98 desktop/build-linux/irb2csv desktop/LIESMICH.txt dist/linux/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: IRB-Thermoviewer-Windows-x64
+          path: dist/win/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: IRB-Thermoviewer-Linux-x64
+          path: dist/linux/
+
+  python:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install numpy
+      - name: Referenzwerte pruefen
+        run: |
+          cd python
+          python - <<'PY'
+          from irb_reader import read_irb
+          import numpy as np
+          T = read_irb("../samples/20923002.IRB").temperatures()
+          assert abs(np.nanmin(T) + 16.62) < 0.01 and abs(np.nanmax(T) - 26.27) < 0.01, (np.nanmin(T), np.nanmax(T))
+          assert abs(T[60, 250] - 7.34) < 0.01, T[60, 250]
+          print("ok", np.nanmin(T), np.nanmax(T))
+          PY

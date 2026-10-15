@@ -1,0 +1,6 @@
+build*/
+dist/
+desktop/third_party/
+__pycache__/
+*.pyc
+*_temperatur.csv

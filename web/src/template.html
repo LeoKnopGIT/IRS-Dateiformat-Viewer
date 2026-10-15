@@ -1,0 +1,153 @@
+<title>IRB Thermoviewer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/*STYLE*/
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <span class="mark" aria-hidden="true"></span>
+      <div>
+        <h1>IRB Thermoviewer</h1>
+        <p>Jenoptik VARIOSCAN · .IRB-Rohdaten in Temperaturen</p>
+      </div>
+    </div>
+    <div class="files" id="fileList" role="tablist" aria-label="Geladene Dateien"></div>
+    <label class="btn primary" for="fileInput">IRB-Dateien öffnen</label>
+    <input type="file" id="fileInput" accept=".irb,.IRB" multiple hidden>
+  </header>
+
+  <main class="work">
+    <section class="viewer" aria-label="Thermogramm">
+      <div class="stage-wrap">
+        <div class="stage-box">
+          <div class="stage" id="stage" tabindex="0" aria-label="Thermogramm. Klick setzt einen Messpunkt, Pfeiltasten verschieben ihn.">
+            <canvas id="img"></canvas>
+            <canvas id="ovl"></canvas>
+            <div class="empty" id="empty" hidden>
+              <strong>Keine Datei geladen</strong>
+              <span>IRB-Dateien hierher ziehen oder oben öffnen.</span>
+            </div>
+          </div>
+        </div>
+        <canvas id="scale" aria-label="Farbskala mit Histogramm"></canvas>
+      </div>
+
+      <div class="readouts">
+        <div class="ro cur"><div class="k"><i></i>Cursor</div><div class="v" id="roCur">–</div><div class="s" id="roCurS">Maus über das Bild bewegen</div></div>
+        <div class="ro max"><div class="k"><i></i>Maximum</div><div class="v" id="roMax">–</div><div class="s" id="roMaxS"></div></div>
+        <div class="ro min"><div class="k"><i></i>Minimum</div><div class="v" id="roMin">–</div><div class="s" id="roMinS"></div></div>
+        <div class="ro mean"><div class="k"><i></i>Mittelwert</div><div class="v" id="roMean">–</div><div class="s" id="roMeanS"></div></div>
+      </div>
+      <p class="hint">Klick ins Bild setzt einen Messpunkt. <kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd> verschieben den gewählten Punkt um 1 Pixel, mit <kbd>Shift</kbd> um 10. <kbd>Entf</kbd> löscht ihn.</p>
+    </section>
+
+    <aside class="side">
+      <section class="panel">
+        <h2>Darstellung</h2>
+        <div class="field">
+          <div class="lbl">Farbpalette</div>
+          <div class="pal" id="pal"></div>
+        </div>
+        <div class="field">
+          <div class="lbl">Temperaturbereich <span id="rangeNote"></span></div>
+          <div class="seg" id="rangeSeg">
+            <button type="button" data-mode="auto" aria-pressed="true">Auto</button>
+            <button type="button" data-mode="camera" aria-pressed="false">Kamera</button>
+            <button type="button" data-mode="manual" aria-pressed="false">Manuell</button>
+          </div>
+          <div class="pair">
+            <label class="inp"><input id="lo" type="number" step="0.1" inputmode="decimal" aria-label="Untere Grenze in Grad Celsius"><em>°C min</em></label>
+            <label class="inp"><input id="hi" type="number" step="0.1" inputmode="decimal" aria-label="Obere Grenze in Grad Celsius"><em>°C max</em></label>
+          </div>
+        </div>
+        <div class="field">
+          <div class="lbl">Farbstufen</div>
+          <label class="inp"><select id="steps" aria-label="Farbstufen">
+            <option value="0">Stufenlos</option>
+            <option value="8">8 Stufen</option>
+            <option value="16">16 Stufen</option>
+            <option value="32">32 Stufen</option>
+          </select></label>
+        </div>
+        <div class="checks">
+          <label class="check"><input type="checkbox" id="showMinMax" checked> Wärmsten und kältesten Punkt markieren</label>
+          <label class="check"><input type="checkbox" id="pixel"> Pixel scharf anzeigen (ohne Glättung)</label>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Messpunkte</h2>
+        <ul class="pts" id="pts"></ul>
+        <p class="pts-empty" id="ptsEmpty">Noch keine Punkte. Klick ins Bild setzt einen.</p>
+        <div class="row-actions"><button type="button" class="btn small" id="clearPts">Alle löschen</button></div>
+      </section>
+
+      <section class="panel">
+        <h2>Korrektur</h2>
+        <div class="field">
+          <div class="lbl">Emissionsgrad ε <span id="epsVal">1,00</span></div>
+          <input type="range" id="epsRange" min="0.10" max="1" step="0.01" value="1" aria-label="Emissionsgrad">
+        </div>
+        <div class="field">
+          <div class="lbl">Reflektierte Temperatur</div>
+          <label class="inp"><input id="trefl" type="number" step="0.5" inputmode="decimal" aria-label="Reflektierte Temperatur in Grad Celsius"><em>°C</em></label>
+        </div>
+        <div class="field">
+          <div class="lbl">Kennlinie Rohwert → Temperatur</div>
+          <label class="inp"><select id="curve" aria-label="Kennlinie">
+            <option value="fit">Planck-Fit durch die Stützpunkte</option>
+            <option value="linear">Linear zwischen Stützpunkten</option>
+          </select></label>
+        </div>
+        <p class="note">Bei ε = 1 ist die reflektierte Temperatur ohne Einfluss. Die Dämpfung durch die Luft wird nicht korrigiert, bei wenigen Metern Abstand ist sie vernachlässigbar.</p>
+      </section>
+
+      <section class="panel">
+        <h2>Export</h2>
+        <div class="row-actions" style="margin-top:0">
+          <button type="button" class="btn" id="expPng">Bild als PNG</button>
+          <button type="button" class="btn" id="expCsv">Temperaturen als CSV</button>
+        </div>
+        <p class="status" id="expStatus">CSV: 240 Zeilen × 360 Spalten, Semikolon, Dezimalkomma (Excel-tauglich).</p>
+      </section>
+
+      <section class="panel">
+        <h2>Aufnahme</h2>
+        <dl class="meta" id="meta"></dl>
+      </section>
+
+      <details class="panel" id="calPanel">
+        <summary>Kalibrierung</summary>
+        <div id="calBody"></div>
+      </details>
+
+      <details class="panel">
+        <summary>Dateiformat</summary>
+        <div class="fmt">
+          <p>Kopf: <code>FF 'IRB' 00</code>, Typ-String <code>VARIOSCAN hr</code>, ab <code>0x19</code> Offset und Anzahl des Blockverzeichnisses (32 Byte je Eintrag: Typ, –, Frame, Offset, Größe).</p>
+          <p>Block Typ 1 = Messbild. Bildkopf: Byte/Pixel, komprimiert, Breite, Höhe; <code>+24</code> ε, <code>+28</code> Abstand, <code>+32</code> Umgebung (K); <code>+58</code> Anzahl Stützpunkte, ab <code>+60</code> Paare (Rohwert, Kelvin) als float32.</p>
+          <p>Nach 744 Byte Kopf folgen die Pixel: <code>uint16</code> little-endian, Zeile für Zeile, links oben beginnend. Weitere Felder: <code>+632</code> Anzeigemitte (K), <code>+636</code> Spanne, <code>+640</code> Aufnahmezeit als OLE-Datum.</p>
+          <p>Block Typ 2 = Vorschaubild 59 × 39 Pixel mit 8 Bit, gleicher Kopf.</p>
+        </div>
+      </details>
+    </aside>
+  </main>
+</div>
+
+<div class="drop" id="drop" hidden><div>IRB-Dateien hier ablegen</div></div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+/*CORE*/
+</script>
+<script>
+/*SAMPLES*/
+</script>
+<script>
+/*APP*/
+</script>

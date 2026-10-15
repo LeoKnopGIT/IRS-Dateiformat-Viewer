@@ -1,0 +1,29 @@
+IRB Thermoviewer 1.0
+====================
+
+Betrachter fuer Thermogramme der Jenoptik VARIOSCAN (.IRB).
+
+Start
+-----
+Windows: thermoviewer98.exe doppelklicken. Bei der Meldung "Der Computer wurde
+         durch Windows geschuetzt" auf "Weitere Informationen" und dann auf
+         "Trotzdem ausfuehren" klicken (das Programm ist nicht signiert).
+Linux:   ./thermoviewer98   (braucht glibc 2.38+ und X11, z. B. Ubuntu 24.04)
+
+Dateien oeffnen: Datei > Oeffnen, oder .IRB-Dateien ins Fenster ziehen.
+
+Bedienung
+---------
+- Maus ueber dem Bild zeigt die Temperatur; ein Klick setzt einen Messpunkt.
+- Messpunkte mit der Maus ziehen oder mit den Pfeiltasten verschieben (Shift = 10 Pixel).
+- Einstellungen unten: Palette, Farbstufen, Bereich (Auto/Kamera/Manuell),
+  Emissionsgrad, reflektierte Temperatur, Kennlinie.
+- Strg+S speichert ein PNG mit Farbskala, Strg+E die Temperaturmatrix als CSV.
+- Strg+I zeigt die Dateiinfo mit Kamera, Aufnahmezeit und Kalibrierung.
+
+Kommandozeile
+-------------
+thermoviewer98 --png bild.png datei.IRB   erzeugt nur das PNG
+irb2csv datei.IRB                          schreibt datei_temperatur.csv
+
+Quellcode und Bauanleitung: siehe README.md im Quellpaket.
