@@ -14,7 +14,7 @@ Werkzeuge zum Lesen und Anzeigen von Thermogrammen der Infrarotkamera **Jenoptik
 
 ## Schnellstart
 
-- **Windows:** `IRB-Thermoviewer-…-Windows-x64.zip` unter [Releases](../../releases) laden, entpacken und `thermoviewer98.exe` starten. Es ist keine Installation nötig.
+- **Windows/Linux:** Unter *Actions* den letzten erfolgreichen Lauf öffnen und unter *Artifacts* `IRB-Thermoviewer-Windows-x64` (bzw. `-Linux-x64`) laden, entpacken und `thermoviewer98.exe` starten. Es ist keine Installation nötig.
 - **Browser:** [`web/irb-thermoviewer.html`](web/irb-thermoviewer.html) herunterladen und doppelklicken. Danach `.IRB`-Dateien ins Fenster ziehen.
 - **Python:** `python python/irb_reader.py samples/*.IRB --csv --png`
 

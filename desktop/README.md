@@ -77,7 +77,7 @@ cmake -S . -B build-win -G Ninja -DCMAKE_TOOLCHAIN_FILE=cmake/mingw-w64-x86_64.c
 cmake --build build-win
 ```
 
-Die Programmdateien im Release 1.0 sind genau so entstanden (Ubuntu 24.04, GCC 13, MinGW-w64 13), ebenso die Builds der GitHub Action.
+Die Builds der GitHub Action entstehen genau so (Ubuntu 24.04, GCC 13, MinGW-w64 13).
 
 ## Aufbau des Quellcodes
 
