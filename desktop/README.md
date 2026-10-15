@@ -95,4 +95,6 @@ Siehe [`../docs/IRB-Dateiformat.md`](../docs/IRB-Dateiformat.md).
 
 ## Lizenz
 
+Projekt: siehe [`LICENSE`](../LICENSE).
+
 FLTK steht unter der LGPL mit Ausnahme für statisches Linken (siehe FLTK `COPYING`).
